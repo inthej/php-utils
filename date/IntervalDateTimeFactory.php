@@ -42,8 +42,8 @@ class IntervalDateTimeFactory
      */
     public static function createDateTimeArrayByHour(DateTime $date_time, $count, $hours)
     {
-        self::checkInvalidIntervalCountSoThrowException($count);
-        self::checkInvalidIntervalSpecNumberSoThrowException($hours);
+        self::checkInvalidIntervalCount($count);
+        self::checkInvalidIntervalSpecNumber($hours);
         define('INTERVAL_SPEC', "PT{$hours}H");
 
         return self::createDateTimeArray($date_time, $count, INTERVAL_SPEC);
@@ -59,8 +59,8 @@ class IntervalDateTimeFactory
      */
     public static function createDateTimeArrayByDay(DateTime $date_time, $count, $days)
     {
-        self::checkInvalidIntervalCountSoThrowException($count);
-        self::checkInvalidIntervalSpecNumberSoThrowException($days);
+        self::checkInvalidIntervalCount($count);
+        self::checkInvalidIntervalSpecNumber($days);
         define('INTERVAL_SPEC', "P{$days}D");
 
         return self::createDateTimeArray($date_time, $count, INTERVAL_SPEC);
@@ -127,7 +127,7 @@ class IntervalDateTimeFactory
      * @param int $count
      * @throws InvalidIntervalCountException
      */
-    private static function checkInvalidIntervalCountSoThrowException($count)
+    private static function checkInvalidIntervalCount($count)
     {
         try {
             if (self::isInvalidIntervalCount($count))
@@ -155,7 +155,7 @@ class IntervalDateTimeFactory
      * @param int $spec_number
      * @throws InvalidIntervalSpecNumberException
      */
-    private static function checkInvalidIntervalSpecNumberSoThrowException($spec_number)
+    private static function checkInvalidIntervalSpecNumber($spec_number)
     {
         try {
             if (self::isInvalidIntervalSpecNumber($spec_number))
@@ -229,6 +229,127 @@ class IntervalDateTimeFactory
     {
         return array_reverse(self::createDateTimeArrayByDay($date_time, $count, $days));
     }
+
+    /**
+     * Creates a delayed datetime array computed based on the input day interval and hour.
+     *
+     * @param DateTime $date_time
+     * @param $count
+     * @param $delay_count
+     * @param $hours
+     * @return array
+     */
+    public static function createDelayDateTimeArrayByHour(DateTime $date_time, $count, $delay_count, $hours)
+    {
+        self::checkInvalidIntervalCount($count);
+        self::checkInvalidDelayCount($delay_count);
+        self::checkInvalidIntervalSpecNumber($hours);
+        define('INTERVAL_SPEC', "PT{$hours}H");
+
+        return self::createDelayDateTimeArray($date_time, $count, $delay_count,INTERVAL_SPEC);
+    }
+
+    /**
+     * Creates a delayed datetime array computed based on the input day interval and count.
+     *
+     * @param DateTime $date_time
+     * @param $count
+     * @param $delay_count
+     * @param $days
+     * @return array
+     */
+    public static function createDelayDateTimeArrayByDay(DateTime $date_time, $count, $delay_count, $days)
+    {
+        self::checkInvalidIntervalCount($count);
+        self::checkInvalidDelayCount($delay_count);
+        self::checkInvalidIntervalSpecNumber($days);
+        define('INTERVAL_SPEC', "P{$days}D");
+
+        return self::createDelayDateTimeArray($date_time, $count, $delay_count,INTERVAL_SPEC);
+    }
+
+    /**
+     * Generates the delayed next datetime based on the interval_spec of the input datetime.
+     *
+     * @param DateTime $date_time
+     * @param $count
+     * @param $delay_count
+     * @param $interval_spec
+     * @return array
+     */
+    private static function createDelayDateTimeArray(DateTime $date_time, $count, $delay_count, $interval_spec)
+    {
+        self::setBaseDateTime($date_time);
+
+        $result = array();
+        for ($i = 0; $i < $count; $i++) {
+            $next_date_time = $i < $delay_count
+                ? self::getBaseDateTime()
+                : self::createNextDateTime(self::getBaseDateTime(), $interval_spec);
+
+            array_push($result, $next_date_time);
+
+            self::setBaseDateTime($next_date_time);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Checks that it is an invalid delay count and throw an exception to terminate the program.
+     *
+     * @param $delay_count
+     * @throws InvalidDelayCountException
+     */
+    private static function checkInvalidDelayCount($delay_count)
+    {
+        try {
+            if (self::isInvalidDelayCount($delay_count))
+                throw new InvalidDelayCountException($delay_count);
+        } catch (InvalidDelayCountException $e) {
+            print($e->getMessage());
+            die("Checking the delay count value. :)");
+        }
+    }
+
+    /**
+     * Checks that it is an invalid delay count.
+     *
+     * @param $delay_count
+     * @return bool
+     */
+    private static function isInvalidDelayCount($delay_count)
+    {
+        return !is_numeric($delay_count);
+    }
+
+    /**
+     * Creates the delayed last datetime calculated based on the input time interval and count.
+     *
+     * @param DateTime $date_time
+     * @param $count
+     * @param $delay_count
+     * @param $hours
+     * @return mixed
+     */
+    public static function createDelayLastIntervalDateTimeByHour(DateTime $date_time, $count, $delay_count, $hours)
+    {
+        return array_pop(self::createDelayDateTimeArrayByHour($date_time, $count, $delay_count, $hours));
+    }
+
+    /**
+     * Creates the delayed last datetime calculated base on the input day interval and count.
+     *
+     * @param DateTime $date_time
+     * @param $count
+     * @param $delay_count
+     * @param $days
+     * @return mixed
+     */
+    public static function createDelayLastIntervalDateTimeByDay(DateTime $date_time, $count, $delay_count, $days)
+    {
+        return array_pop(self::createDelayDateTimeArrayByDay($date_time, $count, $delay_count, $days));
+    }
 }
 
 /**
@@ -239,6 +360,17 @@ class InvalidIntervalCountException extends InvalidArgumentException
     public function __construct($count)
     {
         parent::__construct("Invalid interval count is passed. Interval count value is {$count}.<br>");
+    }
+}
+
+/**
+ * Exception thrown if a delay count does not match with the expected value.
+ */
+class InvalidDelayCountException extends InvalidArgumentException
+{
+    public function __construct($delay_count)
+    {
+        parent::__construct("Invalid delay count is passed. Delay count value is {$delay_count}.<br>");
     }
 }
 
