@@ -1,5 +1,5 @@
 # php-utils
-This projects is my PHP Utility Class Library.
+This projects is my PHP Utility Class Library.  
 During development I implemented the necessary utility classes as libraries.
 
 # Requirements
